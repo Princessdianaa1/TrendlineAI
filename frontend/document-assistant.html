@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Assistant</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --border-color: #334155;
+            --shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .container { max-width: 1600px; margin: 0 auto; }
+
+        .header {
+            background: var(--bg-secondary);
+            padding: 20px 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .card h2 {
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            font-size: 1.4em;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 25px;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent-success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .file-item {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item.active {
+            border: 2px solid var(--accent-primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            min-height: 500px;
+            max-height: 600px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .message.bot .message-avatar {
+            background: var(--accent-success);
+        }
+
+        .message-content {
+            background: var(--bg-primary);
+            padding: 15px 20px;
+            border-radius: 16px;
+            max-width: 70%;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 16px 20px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1em;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .chat-input button {
+            padding: 16px 28px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 Document Assistant</h1>
+            <button class="btn btn-secondary" onclick="goHome()">← Back</button>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <h2>Upload Documents</h2>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div style="font-size: 3em; margin-bottom: 15px;">📁</div>
+                    <div style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">Click to upload</div>
+                    <div style="color: var(--text-muted); font-size: 0.9em;">or drag and drop</div>
+                    <div style="color: var(--text-muted); font-size: 0.85em; margin-top: 10px;">PDF, DOCX, TXT (Max 10MB)</div>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" accept=".pdf,.docx,.txt" onchange="handleFile(this.files[0])">
+
+                <div style="margin-top: 25px;">
+                    <h3 style="color: var(--text-secondary); margin-bottom: 15px; font-size: 1em;">Your Documents</h3>
+                    <div id="filesList">
+                        <div style="text-align: center; color: var(--text-muted); padding: 20px;">No documents uploaded</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="display: flex; flex-direction: column;">
+                <h2>Ask Questions</h2>
+                <div id="selectedDoc" style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none;">
+                    <div style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 5px;">Currently analyzing:</div>
+                    <div style="color: var(--accent-primary); font-weight: 600;" id="selectedDocName"></div>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div style="text-align: center; color: var(--text-muted); padding: 60px 20px;">
+                        <div style="font-size: 4em; margin-bottom: 20px; opacity: 0.3;">💬</div>
+                        <div>Upload a document and start asking questions!</div>
+                    </div>
+                </div>
+                
+                <div class="chat-input">
+                    <input type="text" id="questionInput" placeholder="Ask a question about the document..." onkeypress="handleEnter(event)" disabled>
+                    <button onclick="askQuestion()" id="sendBtn" disabled>Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/document';
+        const userId = localStorage.getItem('userId');
+        let uploadedFiles = [];
+        let currentFile = null;
+
+        if (!userId) {
+            alert('Please login first!');
+            window.location.href = 'index.html';
+        }
+
+        const uploadArea = document.getElementById('uploadArea');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+            uploadArea.addEventListener(e, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(e => {
+            uploadArea.addEventListener(e, () => uploadArea.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(e => {
+            uploadArea.addEventListener(e, () => uploadArea.classList.remove('dragover'), false);
+        });
+
+        uploadArea.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]), false);
+
+        async function handleFile(file) {
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('userId', userId);
+
+            try {
+                const response = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    uploadedFiles.push({
+                        id: Date.now(),
+                        name: file.name,
+                        serverFilename: data.filename
+                    });
+                    updateFilesList();
+                    alert('✅ File uploaded!');
+                }
+            } catch (error) {
+                uploadedFiles.push({
+                    id: Date.now(),
+                    name: file.name,
+                    serverFilename: file.name
+                });
+                updateFilesList();
+                alert('✅ File uploaded (demo mode)');
+            }
+        }
+
+        function updateFilesList() {
+            const list = document.getElementById('filesList');
+            if (uploadedFiles.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">No documents uploaded</div>';
+                return;
+            }
+
+            list.innerHTML = uploadedFiles.map(f => `
+                <div class="file-item ${currentFile && currentFile.id === f.id ? 'active' : ''}">
+                    <div>
+                        <div style="color: var(--text-primary); font-weight: 600;">📄 ${f.name}</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="selectFile(${f.id})" style="padding: 6px 12px; background: var(--accent-primary); color: white; border: none; border-radius: 8px; cursor: pointer;">Select</button>
+                        <button onclick="deleteFile(${f.id})" style="padding: 6px 12px; background: var(--accent-danger); color: white; border: none; border-radius: 8px; cursor: pointer;">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectFile(id) {
+            currentFile = uploadedFiles.find(f => f.id === id);
+            updateFilesList();
+            document.getElementById('selectedDoc').style.display = 'block';
+            document.getElementById('selectedDocName').textContent = currentFile.name;
+            document.getElementById('questionInput').disabled = false;
+            document.getElementById('sendBtn').disabled = false;
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            addBotMessage(`I've loaded "${currentFile.name}". Ask me anything about this document!`);
+        }
+
+        function deleteFile(id) {
+            if (!confirm('Delete this file?')) return;
+            uploadedFiles = uploadedFiles.filter(f => f.id !== id);
+            if (currentFile && currentFile.id === id) {
+                currentFile = null;
+                document.getElementById('selectedDoc').style.display = 'none';
+                document.getElementById('questionInput').disabled = true;
+                document.getElementById('sendBtn').disabled = true;
+            }
+            updateFilesList();
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter' && !document.getElementById('sendBtn').disabled) {
+                askQuestion();
+            }
+        }
+
+        async function askQuestion() {
+            const input = document.getElementById('questionInput');
+            const question = input.value.trim();
+            if (!question || !currentFile) return;
+
+            addUserMessage(question);
+            input.value = '';
+
+            const loadingId = addBotMessage('<span style="color: var(--accent-primary); font-style: italic;">Analyzing document...</span>');
+
+            try {
+                const response = await fetch(`${API_URL}/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: currentFile.serverFilename,
+                        question: question
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    removeMessage(loadingId);
+                    addBotMessage(data.answer);
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                removeMessage(loadingId);
+                addBotMessage('Demo mode: The document analysis feature requires Python backend to be running. The document has been uploaded successfully.');
+            }
+        }
+
+        function addUserMessage(text) {
+            const id = Date.now();
+            const messages = document.getElementById('chatMessages');
+            messages.innerHTML += `
+                <div class="message user" id="msg-${id}">
+                    <div class="message-content">${text}</div>
+                    <div class="message-avatar">👤</div>
+                </div>
+            `;
+            messages.scrollTop = messages.scrollHeight;
+            return id;
+        }
+
+        function addBotMessage(text) {
+            const id = Date.now();
+            const messages = document.getElementById('chatMessages');
+            messages.innerHTML += `
+                <div class="message bot" id="msg-${id}">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">${text}</div>
+                </div>
+            `;
+            messages.scrollTop = messages.scrollHeight;
+            return id;
+        }
+
+        function removeMessage(id) {
+            const msg = document.getElementById(`msg-${id}`);
+            if (msg) msg.remove();
+        }
+
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

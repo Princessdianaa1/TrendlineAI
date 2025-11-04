@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tax Calculator & Optimizer</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --border-color: #334155;
+            --shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            padding: 20px 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .card h2 {
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            color: var(--accent-primary);
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--bg-primary);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 2px solid var(--accent-primary);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: var(--text-secondary);
+            font-size: 1em;
+        }
+
+        .result-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .result-value.highlight {
+            color: var(--accent-success);
+        }
+
+        .regime-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .regime-card {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .regime-card.recommended {
+            border-color: var(--accent-success);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+        }
+
+        .regime-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .regime-tax {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin: 15px 0;
+        }
+
+        .regime-card.recommended .regime-tax {
+            color: var(--accent-success);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        .badge-success {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .tips-section {
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 4px solid var(--accent-warning);
+        }
+
+        .tips-section h3 {
+            color: var(--accent-warning);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tips-section p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            white-space: pre-line;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .regime-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧮 AI Tax Calculator & Optimizer</h1>
+            <button class="btn btn-secondary" onclick="goHome()">← Back to Home</button>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>💰 Income Details</h2>
+                
+                <div class="form-section">
+                    <h3>Income Sources</h3>
+                    <div class="form-group">
+                        <label>Financial Year</label>
+                        <select id="financialYear">
+                            <option value="2024-25">2024-25</option>
+                            <option value="2023-24">2023-24</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Salary Income (₹)</label>
+                        <input type="number" id="salaryIncome" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>House Property Income (₹)</label>
+                        <input type="number" id="houseIncome" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Business/Professional Income (₹)</label>
+                        <input type="number" id="businessIncome" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Short-term Capital Gains (₹)</label>
+                        <input type="number" id="stcg" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Long-term Capital Gains (₹)</label>
+                        <input type="number" id="ltcg" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Other Income (₹)</label>
+                        <input type="number" id="otherIncome" value="0" min="0">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Deductions (Section 80C, 80D, etc.)</h3>
+                    <div class="form-group">
+                        <label>80C Deductions - Max ₹1.5L (PPF, ELSS, EPF, etc.)</label>
+                        <input type="number" id="deduction80c" value="0" min="0" max="150000">
+                    </div>
+                    <div class="form-group">
+                        <label>80D - Health Insurance (Max ₹25K/₹50K)</label>
+                        <input type="number" id="deduction80d" value="0" min="0" max="50000">
+                    </div>
+                    <div class="form-group">
+                        <label>80CCD(1B) - NPS (Max ₹50K)</label>
+                        <input type="number" id="deduction80ccd1b" value="0" min="0" max="50000">
+                    </div>
+                    <div class="form-group">
+                        <label>80E - Education Loan Interest</label>
+                        <input type="number" id="deduction80e" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>80G - Donations</label>
+                        <input type="number" id="deduction80g" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Other Deductions</label>
+                        <input type="number" id="otherDeductions" value="0" min="0">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="calculateTax()" style="width: 100%; padding: 16px; font-size: 1.1em;">
+                    Calculate Tax & Optimize 🚀
+                </button>
+            </div>
+
+            <div class="card">
+                <h2>📊 Tax Calculation Results</h2>
+                
+                <div class="result-card">
+                    <div class="result-row">
+                        <span class="result-label">Total Income</span>
+                        <span class="result-value" id="totalIncome">₹0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Total Deductions</span>
+                        <span class="result-value" style="color: var(--accent-success);" id="totalDeductions">₹0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Taxable Income</span>
+                        <span class="result-value" id="taxableIncome">₹0</span>
+                    </div>
+                </div>
+
+                <div class="regime-comparison">
+                    <div class="regime-card" id="oldRegimeCard">
+                        <h3>Old Regime</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9em;">With Deductions</p>
+                        <div class="regime-tax" id="oldRegimeTax">₹0</div>
+                    </div>
+                    <div class="regime-card" id="newRegimeCard">
+                        <h3>New Regime</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9em;">No Deductions</p>
+                        <div class="regime-tax" id="newRegimeTax">₹0</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0;">
+                    <h3 style="color: var(--accent-success); font-size: 1.3em;">
+                        💡 Recommended: <span id="recommendedRegime">-</span>
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-top: 10px;" id="savingsAmount"></p>
+                </div>
+
+                <div class="tips-section">
+                    <h3>💡 Tax Saving Tips</h3>
+                    <p id="taxTips">Enter your income details and calculate to see personalized tax-saving recommendations.</p>
+                </div>
+
+                <button class="btn btn-primary" onclick="saveTaxCalculation()" style="width: 100%; margin-top: 20px;">
+                    Save Calculation
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api/tax';
+        const userId = localStorage.getItem('userId');
+
+        if (!userId) {
+            alert('Please login first!');
+            window.location.href = 'index.html';
+        }
+
+        let currentCalculation = null;
+
+        function calculateTax() {
+            const taxData = {
+                userId: parseInt(userId),
+                financialYear: document.getElementById('financialYear').value,
+                salaryIncome: parseFloat(document.getElementById('salaryIncome').value) || 0,
+                housePropertyIncome: parseFloat(document.getElementById('houseIncome').value) || 0,
+                businessIncome: parseFloat(document.getElementById('businessIncome').value) || 0,
+                capitalGainsShort: parseFloat(document.getElementById('stcg').value) || 0,
+                capitalGainsLong: parseFloat(document.getElementById('ltcg').value) || 0,
+                otherIncome: parseFloat(document.getElementById('otherIncome').value) || 0,
+                deduction80c: parseFloat(document.getElementById('deduction80c').value) || 0,
+                deduction80d: parseFloat(document.getElementById('deduction80d').value) || 0,
+                deduction80ccd1b: parseFloat(document.getElementById('deduction80ccd1b').value) || 0,
+                deduction80e: parseFloat(document.getElementById('deduction80e').value) || 0,
+                deduction80g: parseFloat(document.getElementById('deduction80g').value) || 0,
+                otherDeductions: parseFloat(document.getElementById('otherDeductions').value) || 0
+            };
+
+            // Calculate totals
+            const totalIncome = taxData.salaryIncome + taxData.housePropertyIncome + taxData.businessIncome +
+                              taxData.capitalGainsShort + taxData.capitalGainsLong + taxData.otherIncome;
+            
+            const totalDeductions = taxData.deduction80c + taxData.deduction80d + taxData.deduction80ccd1b +
+                                  taxData.deduction80e + taxData.deduction80g + taxData.otherDeductions;
+
+            // Display immediate results
+            document.getElementById('totalIncome').textContent = '₹' + totalIncome.toLocaleString('en-IN');
+            document.getElementById('totalDeductions').textContent = '₹' + totalDeductions.toLocaleString('en-IN');
+            
+            const taxableIncome = Math.max(0, totalIncome - totalDeductions);
+            document.getElementById('taxableIncome').textContent = '₹' + taxableIncome.toLocaleString('en-IN');
+
+            // Calculate taxes
+            const oldTax = calculateOldRegime(taxableIncome);
+            const newTax = calculateNewRegime(totalIncome);
+
+            document.getElementById('oldRegimeTax').textContent = '₹' + Math.round(oldTax).toLocaleString('en-IN');
+            document.getElementById('newRegimeTax').textContent = '₹' + Math.round(newTax).toLocaleString('en-IN');
+
+            // Determine recommended regime
+            const recommended = oldTax <= newTax ? 'Old Regime' : 'New Regime';
+            const savings = Math.abs(oldTax - newTax);
+            
+            document.getElementById('recommendedRegime').textContent = recommended;
+            document.getElementById('savingsAmount').textContent = 
+                `You'll save ₹${Math.round(savings).toLocaleString('en-IN')} by choosing ${recommended}`;
+
+            // Highlight recommended card
+            document.getElementById('oldRegimeCard').classList.remove('recommended');
+            document.getElementById('newRegimeCard').classList.remove('recommended');
+            
+            if (recommended === 'Old Regime') {
+                document.getElementById('oldRegimeCard').classList.add('recommended');
+                document.getElementById('oldRegimeCard').innerHTML += '<span class="badge badge-success">Recommended</span>';
+            } else {
+                document.getElementById('newRegimeCard').classList.add('recommended');
+                document.getElementById('newRegimeCard').innerHTML += '<span class="badge badge-success">Recommended</span>';
+            }
+
+            // Generate tax tips
+            const tips = generateTaxTips(taxData, totalDeductions);
+            document.getElementById('taxTips').textContent = tips;
+
+            // Store calculation for saving
+            currentCalculation = {
+                ...taxData,
+                taxableIncome: taxableIncome,
+                taxOldRegime: oldTax,
+                taxNewRegime: newTax,
+                recommendedRegime: recommended,
+                taxSavingTips: tips
+            };
+        }
+
+        function calculateOldRegime(income) {
+            let tax = 0;
+            if (income > 250000) tax += Math.min(income - 250000, 250000) * 0.05;
+            if (income > 500000) tax += Math.min(income - 500000, 500000) * 0.20;
+            if (income > 1000000) tax += (income - 1000000) * 0.30;
+            return tax * 1.04; // Add 4% cess
+        }
+
+        function calculateNewRegime(income) {
+            let tax = 0;
+            if (income > 300000) tax += Math.min(income - 300000, 300000) * 0.05;
+            if (income > 600000) tax += Math.min(income - 600000, 300000) * 0.10;
+            if (income > 900000) tax += Math.min(income - 900000, 300000) * 0.15;
+            if (income > 1200000) tax += Math.min(income - 1200000, 300000) * 0.20;
+            if (income > 1500000) tax += (income - 1500000) * 0.30;
+            return tax * 1.04; // Add 4% cess
+        }
+
+        function generateTaxTips(data, totalDeductions) {
+            let tips = '';
+            
+            const remaining80c = 150000 - data.deduction80c;
+            if (remaining80c > 0) {
+                tips += `💡 Invest ₹${remaining80c.toLocaleString('en-IN')} more in 80C instruments (PPF/ELSS/EPF) to save up to ₹${Math.round(remaining80c * 0.30).toLocaleString('en-IN')} in taxes.\n\n`;
+            }
+            
+            const remaining80d = 25000 - data.deduction80d;
+            if (remaining80d > 0) {
+                tips += `🏥 Pay ₹${remaining80d.toLocaleString('en-IN')} as health insurance premium to save ₹${Math.round(remaining80d * 0.30).toLocaleString('en-IN')} under 80D.\n\n`;
+            }
+            
+            if (data.deduction80ccd1b === 0) {
+                tips += `💰 Invest ₹50,000 in NPS to get additional deduction under 80CCD(1B) and save ₹15,600!\n\n`;
+            }
+            
+            tips += `📊 Always compare both regimes before filing. Your current choice saves you money!`;
+            
+            return tips;
+        }
+
+        async function saveTaxCalculation() {
+            if (!currentCalculation) {
+                alert('Please calculate tax first!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/calculate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentCalculation)
+                });
+
+                if (response.ok) {
+                    alert('✅ Tax calculation saved successfully!');
+                } else {
+                    alert('⚠️ Could not save to database. Calculation is still available on screen.');
+                }
+            } catch (error) {
+                console.log('Backend not available, calculation shown on screen');
+                alert('⚠️ Backend not connected. Your calculation is displayed but not saved.');
+            }
+        }
+
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

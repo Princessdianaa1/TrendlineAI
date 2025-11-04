@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal-Based Planning</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --border-color: #334155;
+            --shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            padding: 20px 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+        }
+
+        .btn-success {
+            background: var(--accent-success);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.85em;
+        }
+
+        .btn-danger {
+            background: var(--accent-danger);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.85em;
+        }
+
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .goal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .goal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .goal-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .goal-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .goal-type {
+            color: var(--text-muted);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .goal-amount {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin: 15px 0;
+        }
+
+        .goal-progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-success), var(--accent-primary));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .goal-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+        }
+
+        .goal-stat {
+            text-align: center;
+        }
+
+        .goal-stat-label {
+            color: var(--text-muted);
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .goal-stat-value {
+            color: var(--text-primary);
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .goal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .strategy-box {
+            background: var(--bg-primary);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            border-left: 4px solid var(--accent-warning);
+        }
+
+        .strategy-box h4 {
+            color: var(--accent-warning);
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .strategy-box p {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--bg-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 40px;
+            border-radius: 24px;
+            max-width: 600px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            margin: auto;
+        }
+
+        .modal-content h2 {
+            color: var(--text-primary);
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            border: 2px dashed var(--border-color);
+        }
+
+        .empty-state-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-success);
+        }
+
+        .badge-completed {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-primary);
+        }
+
+        @media (max-width: 768px) {
+            .goals-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .goal-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Goal-Based Planning</h1>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn btn-primary" onclick="openAddModal()">+ Create Goal</button>
+                <button class="btn btn-secondary" onclick="goHome()">← Back</button>
+            </div>
+        </div>
+
+        <div class="goals-grid" id="goalsGrid">
+            <div class="empty-state">
+                <div class="empty-state-icon">🎯</div>
+                <h3 style="color: var(--text-primary); margin-bottom: 10px;">No Goals Yet</h3>
+                <p style="color: var(--text-muted);">Create your first financial goal to start planning!</p>
+                <button class="btn btn-primary" onclick="openAddModal()" style="margin-top: 20px;">Create First Goal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h2>Create New Goal</h2>
+            
+            <form onsubmit="createGoal(event)">
+                <div class="form-group">
+                    <label>Goal Name</label>
+                    <input type="text" id="goalName" placeholder="e.g., Buy a House" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Goal Type</label>
+                        <select id="goalType" required onchange="updateGoalIcon()">
+                            <option value="house">🏠 House</option>
+                            <option value="car">🚗 Car</option>
+                            <option value="education">🎓 Education</option>
+                            <option value="wedding">💍 Wedding</option>
+                            <option value="vacation">✈️ Vacation</option>
+                            <option value="retirement">👴 Retirement</option>
+                            <option value="emergency_fund">🚨 Emergency Fund</option>
+                            <option value="custom">📌 Custom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Risk Profile</label>
+                        <select id="riskProfile" required>
+                            <option value="conservative">Conservative</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="aggressive">Aggressive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Target Amount (₹)</label>
+                        <input type="number" id="targetAmount" min="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Savings (₹)</label>
+                        <input type="number" id="currentAmount" value="0" min="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Date</label>
+                        <input type="date" id="targetDate" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Priority (1-10)</label>
+                    <input type="number" id="priority" min="1" max="10" value="5">
+                </div>
+
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea id="notes" rows="3" placeholder="Any additional details..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Goal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Progress Modal -->
+    <div id="progressModal" class="modal">
+        <div class="modal-content">
+            <h2>Update Progress</h2>
+            
+            <form onsubmit="updateProgress(event)">
+                <input type="hidden" id="progressGoalId">
+                
+                <div class="form-group">
+                    <label>Add Amount (₹)</label>
+                    <input type="number" id="progressAmount" min="1" step="0.01" required>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeProgressModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api/goals';
+        const userId = localStorage.getItem('userId');
+
+        if (!userId) {
+            alert('Please login first!');
+            window.location.href = 'index.html';
+        }
+
+        let goals = [];
+
+        const goalIcons = {
+            'house': '🏠',
+            'car': '🚗',
+            'education': '🎓',
+            'wedding': '💍',
+            'vacation': '✈️',
+            'retirement': '👴',
+            'emergency_fund': '🚨',
+            'custom': '📌'
+        };
+
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+            document.getElementById('startDate').valueAsDate = new Date();
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+            document.querySelector('#addModal form').reset();
+        }
+
+        function openProgressModal(goalId) {
+            document.getElementById('progressGoalId').value = goalId;
+            document.getElementById('progressModal').classList.add('active');
+        }
+
+        function closeProgressModal() {
+            document.getElementById('progressModal').classList.remove('active');
+            document.querySelector('#progressModal form').reset();
+        }
+
+        function updateGoalIcon() {
+            const type = document.getElementById('goalType').value;
+            // Could add visual feedback here
+        }
+
+        async function createGoal(event) {
+            event.preventDefault();
+
+            const startDate = new Date(document.getElementById('startDate').value);
+            const targetDate = new Date(document.getElementById('targetDate').value);
+            const monthsRemaining = Math.floor((targetDate - startDate) / (1000 * 60 * 60 * 24 * 30));
+
+            const targetAmount = parseFloat(document.getElementById('targetAmount').value);
+            const currentAmount = parseFloat(document.getElementById('currentAmount').value) || 0;
+            const remaining = targetAmount - currentAmount;
+            const monthlySaving = monthsRemaining > 0 ? remaining / monthsRemaining : 0;
+
+            const goal = {
+                userId: parseInt(userId),
+                goalName: document.getElementById('goalName').value,
+                goalType: document.getElementById('goalType').value,
+                targetAmount: targetAmount,
+                currentAmount: currentAmount,
+                targetDate: document.getElementById('targetDate').value,
+                startDate: document.getElementById('startDate').value,
+                monthsRemaining: monthsRemaining,
+                monthlySavingRequired: monthlySaving,
+                riskProfile: document.getElementById('riskProfile').value,
+                status: 'active',
+                icon: goalIcons[document.getElementById('goalType').value],
+                priority: parseInt(document.getElementById('priority').value),
+                notes: document.getElementById('notes').value,
+                investmentStrategy: ''  // Will be calculated by backend
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(goal)
+                });
+
+                if (response.ok) {
+                    const saved = await response.json();
+                    goals.push(saved);
+                    updateUI();
+                    closeAddModal();
+                    alert('✅ Goal created successfully!');
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                // Fallback to localStorage
+                goal.id = Date.now();
+                goal.progressPercentage = (currentAmount / targetAmount * 100).toFixed(2);
+                goal.investmentStrategy = generateStrategy(goal);
+                goals.push(goal);
+                saveToLocalStorage();
+                updateUI();
+                closeAddModal();
+                alert('✅ Goal created (saved locally)');
+            }
+        }
+
+        async function updateProgress(event) {
+            event.preventDefault();
+
+            const goalId = parseInt(document.getElementById('progressGoalId').value);
+            const amount = parseFloat(document.getElementById('progressAmount').value);
+
+            try {
+                const response = await fetch(`${API_URL}/${goalId}/progress`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amount })
+                });
+
+                if (response.ok) {
+                    const updated = await response.json();
+                    const index = goals.findIndex(g => g.id === goalId);
+                    if (index !== -1) {
+                        goals[index] = updated;
+                    }
+                    updateUI();
+                    closeProgressModal();
+                    alert('✅ Progress updated!');
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                // Fallback
+                const goal = goals.find(g => g.id === goalId);
+                if (goal) {
+                    goal.currentAmount = parseFloat(goal.currentAmount) + amount;
+                    goal.progressPercentage = (goal.currentAmount / goal.targetAmount * 100).toFixed(2);
+                    
+                    if (goal.currentAmount >= goal.targetAmount) {
+                        goal.status = 'completed';
+                    }
+                }
+                saveToLocalStorage();
+                updateUI();
+                closeProgressModal();
+                alert('✅ Progress updated!');
+            }
+        }
+
+        async function loadGoals() {
+            try {
+                const response = await fetch(`${API_URL}/user/${userId}`);
+                if (response.ok) {
+                    goals = await response.json();
+                    updateUI();
+                } else {
+                    loadFromLocalStorage();
+                }
+            } catch (error) {
+                loadFromLocalStorage();
+            }
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('financialGoals');
+            if (stored) {
+                goals = JSON.parse(stored);
+                updateUI();
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('financialGoals', JSON.stringify(goals));
+        }
+
+        function updateUI() {
+            const grid = document.getElementById('goalsGrid');
+
+            if (goals.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎯</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 10px;">No Goals Yet</h3>
+                        <p style="color: var(--text-muted);">Create your first financial goal to start planning!</p>
+                        <button class="btn btn-primary" onclick="openAddModal()" style="margin-top: 20px;">Create First Goal</button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = goals.map(goal => {
+                const progress = parseFloat(goal.progressPercentage || 0);
+                const icon = goal.icon || goalIcons[goal.goalType] || '🎯';
+                const statusBadge = goal.status === 'completed' 
+                    ? '<span class="badge badge-completed">Completed</span>'
+                    : '<span class="badge badge-active">Active</span>';
+
+                return `
+                    <div class="goal-card">
+                        <div class="goal-header">
+                            <div>
+                                <div class="goal-icon">${icon}</div>
+                                <div class="goal-title">${goal.goalName}</div>
+                                <div class="goal-type">${goal.goalType.replace('_', ' ')} ${statusBadge}</div>
+                            </div>
+                        </div>
+
+                        <div class="goal-amount">₹${parseFloat(goal.currentAmount || 0).toLocaleString('en-IN')} / ₹${parseFloat(goal.targetAmount).toLocaleString('en-IN')}</div>
+
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill" style="width: ${Math.min(progress, 100)}%"></div>
+                        </div>
+                        <div style="text-align: center; color: var(--accent-success); font-weight: 600; margin-top: 8px;">
+                            ${progress.toFixed(1)}% Complete
+                        </div>
+
+                        <div class="goal-stats">
+                            <div class="goal-stat">
+                                <div class="goal-stat-label">Monthly Saving</div>
+                                <div class="goal-stat-value">₹${parseFloat(goal.monthlySavingRequired || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                            </div>
+                            <div class="goal-stat">
+                                <div class="goal-stat-label">Months Left</div>
+                                <div class="goal-stat-value">${goal.monthsRemaining || 0}</div>
+                            </div>
+                        </div>
+
+                        ${goal.investmentStrategy ? `
+                            <div class="strategy-box">
+                                <h4>📊 Investment Strategy</h4>
+                                <p>${goal.investmentStrategy}</p>
+                            </div>
+                        ` : ''}
+
+                        <div class="goal-actions">
+                            ${goal.status !== 'completed' ? `
+                                <button class="btn btn-success" onclick="openProgressModal(${goal.id})" style="flex: 1;">Add Savings</button>
+                            ` : ''}
+                            <button class="btn btn-danger" onclick="deleteGoal(${goal.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function generateStrategy(goal) {
+            const months = goal.monthsRemaining;
+            const risk = goal.riskProfile;
+
+            if (months <= 12) {
+                return "Short-term: Use Liquid Funds (7-7.5%), Short-term FDs (6.5-7%), and savings account";
+            } else if (months <= 36) {
+                return "Medium-term: 60% Debt Funds, 30% Conservative Hybrid Funds, 10% Liquid Funds";
+            } else {
+                if (risk === 'aggressive') {
+                    return "Long-term Aggressive: 70% Equity Mutual Funds (12-15%), 20% Mid/Small Cap, 10% Debt";
+                } else if (risk === 'moderate') {
+                    return "Long-term Moderate: 50% Equity Funds, 30% Balanced Hybrid, 20% Debt Funds";
+                } else {
+                    return "Long-term Conservative: 40% PPF (7.1% tax-free), 30% Debt Funds, 30% Equity";
+                }
+            }
+        }
+
+        async function deleteGoal(id) {
+            if (!confirm('Are you sure you want to delete this goal?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    goals = goals.filter(g => g.id !== id);
+                    updateUI();
+                    alert('✅ Goal deleted!');
+                }
+            } catch (error) {
+                goals = goals.filter(g => g.id !== id);
+                saveToLocalStorage();
+                updateUI();
+                alert('✅ Goal deleted!');
+            }
+        }
+
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+
+        // Load goals on page load
+        loadGoals();
+    </script>
+</body>
+</html>
